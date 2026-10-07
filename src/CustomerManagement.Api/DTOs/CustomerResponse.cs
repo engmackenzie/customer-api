@@ -19,3 +19,9 @@ public sealed record CustomerResponse(
         customer.Id, customer.FirstName, customer.LastName,
         customer.Email, customer.PhoneNumber, customer.CreatedAt);
 }
+
+public sealed record DataResponse<T>(T Data);
+
+public sealed record Pagination(int Page, int PageSize, int TotalCount, int TotalPages);
+
+public sealed record PagedResponse<T>(IReadOnlyList<T> Data, Pagination Pagination);

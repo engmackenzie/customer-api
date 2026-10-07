@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using CustomerManagement.Api.Data;
 using CustomerManagement.Api.DTOs;
 using CustomerManagement.Api.Entities;
@@ -12,32 +13,43 @@ namespace CustomerManagement.Api.Controllers;
 public sealed class CustomersController(AppDbContext db) : ControllerBase
 {
     [HttpGet]
-    public async Task<ActionResult<List<CustomerResponse>>> GetAll(CancellationToken cancellationToken)
+    [ProducesResponseType<PagedResponse<CustomerResponse>>(StatusCodes.Status200OK)]
+    [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<PagedResponse<CustomerResponse>>> GetAll(
+        [FromQuery, Range(1, int.MaxValue)] int page = 1,
+        [FromQuery, Range(1, 100)] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        return await db.Customers.AsNoTracking()
-            .OrderBy(customer => customer.Id)
+        var customers = db.Customers.AsNoTracking().OrderBy(customer => customer.Id);
+        var totalCount = await customers.CountAsync(cancellationToken);
+        var data = await customers
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
             .Select(CustomerResponse.Projection)
             .ToListAsync(cancellationToken);
+        var totalPages = totalCount == 0 ? 0 : (totalCount + pageSize - 1) / pageSize;
+
+        return new PagedResponse<CustomerResponse>(data, new Pagination(page, pageSize, totalCount, totalPages));
     }
 
     [HttpGet("{id:int}")]
-    [ProducesResponseType<CustomerResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<DataResponse<CustomerResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
-    public async Task<ActionResult<CustomerResponse>> GetById(int id, CancellationToken cancellationToken)
+    public async Task<ActionResult<DataResponse<CustomerResponse>>> GetById(int id, CancellationToken cancellationToken)
     {
         var customer = await db.Customers.AsNoTracking()
             .Where(customer => customer.Id == id)
             .Select(CustomerResponse.Projection)
             .SingleOrDefaultAsync(cancellationToken);
 
-        return customer is null ? CustomerNotFound(id) : Ok(customer);
+        return customer is null ? CustomerNotFound(id) : Ok(new DataResponse<CustomerResponse>(customer));
     }
 
     [HttpPost]
-    [ProducesResponseType<CustomerResponse>(StatusCodes.Status201Created)]
+    [ProducesResponseType<DataResponse<CustomerResponse>>(StatusCodes.Status201Created)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CustomerResponse>> Create(
+    public async Task<ActionResult<DataResponse<CustomerResponse>>> Create(
         CustomerRequest request, CancellationToken cancellationToken)
     {
         if (await db.Customers.AnyAsync(customer => customer.Email == request.Email, cancellationToken))
@@ -65,15 +77,16 @@ public sealed class CustomersController(AppDbContext db) : ControllerBase
             return DuplicateEmail();
         }
 
-        return CreatedAtAction(nameof(GetById), new { id = customer.Id }, CustomerResponse.From(customer));
+        return CreatedAtAction(
+            nameof(GetById), new { id = customer.Id }, new DataResponse<CustomerResponse>(CustomerResponse.From(customer)));
     }
 
     [HttpPut("{id:int}")]
-    [ProducesResponseType<CustomerResponse>(StatusCodes.Status200OK)]
+    [ProducesResponseType<DataResponse<CustomerResponse>>(StatusCodes.Status200OK)]
     [ProducesResponseType<ValidationProblemDetails>(StatusCodes.Status400BadRequest)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status404NotFound)]
     [ProducesResponseType<ProblemDetails>(StatusCodes.Status409Conflict)]
-    public async Task<ActionResult<CustomerResponse>> Update(
+    public async Task<ActionResult<DataResponse<CustomerResponse>>> Update(
         int id, CustomerRequest request, CancellationToken cancellationToken)
     {
         var customer = await db.Customers.SingleOrDefaultAsync(customer => customer.Id == id, cancellationToken);
@@ -102,7 +115,7 @@ public sealed class CustomersController(AppDbContext db) : ControllerBase
             return DuplicateEmail();
         }
 
-        return Ok(CustomerResponse.From(customer));
+        return Ok(new DataResponse<CustomerResponse>(CustomerResponse.From(customer)));
     }
 
     private ObjectResult DuplicateEmail() => Problem(

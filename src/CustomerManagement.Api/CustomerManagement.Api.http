@@ -12,8 +12,8 @@ Content-Type: application/json
   "phoneNumber": "0712345678"
 }
 
-### List
-GET {{baseUrl}}/api/customers
+### List (page defaults to 1, pageSize to 10)
+GET {{baseUrl}}/api/customers?page=1&pageSize=10
 
 ### Get (set customerId to the ID returned by POST)
 GET {{baseUrl}}/api/customers/{{customerId}}
