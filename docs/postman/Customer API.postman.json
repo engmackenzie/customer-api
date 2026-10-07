@@ -1,0 +1,156 @@
+{
+    "info": {
+        "name": "Customer API",
+        "description": "",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Fetch Customers",
+            "description": "",
+            "event": [],
+            "auth": {},
+            "request": {
+                "auth": {},
+                "method": "GET",
+                "body": {},
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/customers",
+                    "path": [
+                        "customers"
+                    ],
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "query": [],
+                    "variable": []
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {
+                "strictSSL": false,
+                "followRedirects": true
+            }
+        },
+        {
+            "name": "Fetch Customer with ID",
+            "description": "",
+            "event": [],
+            "auth": {},
+            "request": {
+                "auth": {},
+                "method": "GET",
+                "body": {},
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/customers/:id",
+                    "path": [
+                        "customers",
+                        ":id"
+                    ],
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "query": [],
+                    "variable": [
+                        {
+                            "key": "id",
+                            "value": "3002",
+                            "description": "Customer ID",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {
+                "strictSSL": false,
+                "followRedirects": true
+            }
+        },
+        {
+            "name": "Create Customer",
+            "description": "",
+            "event": [],
+            "auth": {},
+            "request": {
+                "auth": {},
+                "method": "POST",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"firstName\": \"John\",\n    \"lastName\": \"Kamau\",\n    \"email\": \"john.kamau@example2.com\",\n    \"phoneNumber\": \"0712345678\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/customers",
+                    "path": [
+                        "customers"
+                    ],
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "query": [],
+                    "variable": []
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {
+                "strictSSL": false,
+                "followRedirects": true
+            }
+        },
+        {
+            "name": "Update Customer",
+            "description": "",
+            "event": [],
+            "auth": {},
+            "request": {
+                "auth": {},
+                "method": "PUT",
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"lastName\": \"Kamau - updated\"\n}",
+                    "options": {
+                        "raw": {
+                            "language": "json"
+                        }
+                    }
+                },
+                "header": [],
+                "url": {
+                    "raw": "{{baseUrl}}/customers/:id",
+                    "path": [
+                        "customers",
+                        ":id"
+                    ],
+                    "host": [
+                        "{{baseUrl}}"
+                    ],
+                    "query": [],
+                    "variable": [
+                        {
+                            "key": "id",
+                            "value": "3002",
+                            "description": "Customer ID",
+                            "type": "string"
+                        }
+                    ]
+                }
+            },
+            "response": [],
+            "protocolProfileBehavior": {
+                "strictSSL": false,
+                "followRedirects": true
+            }
+        }
+    ],
+    "variable": [],
+    "event": [],
+    "auth": {}
+}

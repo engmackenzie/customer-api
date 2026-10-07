@@ -124,6 +124,8 @@ Every field is required and trimmed. Names can be 100 characters, email 254, pho
 
 `src/CustomerManagement.Api/CustomerManagement.Api.http` has the same requests, including the error cases. Set `baseUrl` and `customerId` there to match your run.
 
+Postman imports for the collection and the local environment are in [docs/postman.md](docs/postman.md).
+
 ## Check a build
 
 ```sh
