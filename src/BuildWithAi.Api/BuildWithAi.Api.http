@@ -1,0 +1,55 @@
+@baseUrl = http://localhost:5080
+@customerId = 1
+
+### Create (201). Repeating this returns 409.
+POST {{baseUrl}}/api/customers
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Kamau",
+  "email": "john.kamau@example.com",
+  "phoneNumber": "0712345678"
+}
+
+### List
+GET {{baseUrl}}/api/customers
+
+### Get (set customerId to the ID returned by POST)
+GET {{baseUrl}}/api/customers/{{customerId}}
+
+### Update (keeping this customer's email is valid)
+PUT {{baseUrl}}/api/customers/{{customerId}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Kamau",
+  "email": "john.kamau@example.com",
+  "phoneNumber": "+254722334455"
+}
+
+### Invalid input (400)
+POST {{baseUrl}}/api/customers
+Content-Type: application/json
+
+{
+  "firstName": " ",
+  "lastName": "Kamau",
+  "email": "not-an-email",
+  "phoneNumber": ""
+}
+
+### Unknown customer (404)
+GET {{baseUrl}}/api/customers/2147483647
+
+### API information
+GET {{baseUrl}}/
+Accept: application/json
+
+### Health check
+GET {{baseUrl}}/health
+
+### OpenAPI document (development only)
+GET {{baseUrl}}/openapi/v1.json
+Accept: application/json
