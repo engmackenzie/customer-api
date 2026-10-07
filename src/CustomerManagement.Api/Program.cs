@@ -1,4 +1,4 @@
-using BuildWithAi.Api.Data;
+using CustomerManagement.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,7 +27,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapGet("/", () => Results.Ok(new { name = "Build With AI API" }))
+app.MapGet("/", () => Results.Ok(new { name = "Customer Management API" }))
     .WithName("GetApiInfo");
 
 app.MapHealthChecks("/health");

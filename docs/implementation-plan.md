@@ -1,8 +1,8 @@
 # Customer Management API: implementation plan
 
-Status: Draft for review. No assessment implementation has started.
+Status: Approved, implemented, and functionally verified on 7 October 2026. SQL Server stability under Apple Silicon emulation remains unresolved; see [verification results](verification.md).
 
-Project: `/Users/mack/diskd/personal/build-with-ai`
+Project: `/Users/mack/diskd/personal/customer-management`
 
 Source: [NET Engineer Assessment.pdf](/Users/mack/Downloads/NET%20Engineer%20Assessment.pdf), pages 1-8.
 
@@ -10,7 +10,7 @@ Source: [NET Engineer Assessment.pdf](/Users/mack/Downloads/NET%20Engineer%20Ass
 
 Build the small, maintainable Customer Management API described in the assessment using .NET 10, ASP.NET Core, Entity Framework Core, SQL Server, and Docker.
 
-The PDF defines the assessment requirements. Its example layout and commands are guidance, not instructions to execute during this planning step. Implementation begins after this plan is reviewed.
+The PDF defines the assessment requirements. Its example layout and commands are guidance, not instructions to execute during this planning step. This plan was approved before implementation; the README now contains the current run instructions.
 
 Required deliverables:
 
@@ -27,7 +27,7 @@ Keep pagination, search, and additional automated tests secondary to the core de
 
 ### Keep one application project
 
-Extend `BuildWithAi.Api` rather than renaming the starter or introducing separate infrastructure and domain assemblies. The assessment's multi-project layout is an example, and it explicitly allows a simpler structure.
+Extend `CustomerManagement.Api` without introducing separate infrastructure and domain assemblies. The assessment's multi-project layout is an example, and it explicitly allows a simpler structure.
 
 Use one `CustomersController`, one EF Core `AppDbContext`, one customer entity, and small DTOs. Inject the context directly into the controller. For four straightforward database operations, a repository, service interface, mediator, mapping library, or generic response wrapper would add little value.
 
@@ -36,10 +36,10 @@ Use `[ApiController]` and Data Annotations for built-in request validation and H
 ### Proposed layout
 
 ```text
-build-with-ai/
+customer-management/
   .config/dotnet-tools.json
   docs/implementation-plan.md
-  src/BuildWithAi.Api/
+  src/CustomerManagement.Api/
     Controllers/CustomersController.cs
     DTOs/CustomerRequest.cs
     DTOs/CustomerResponse.cs
@@ -49,14 +49,14 @@ build-with-ai/
     Properties/launchSettings.json
     Program.cs
     appsettings.json
-    BuildWithAi.Api.csproj
-    BuildWithAi.Api.http
+    CustomerManagement.Api.csproj
+    CustomerManagement.Api.http
   .dockerignore
   .env.example
   .gitignore
   Dockerfile
   docker-compose.yml
-  BuildWithAi.slnx
+  CustomerManagement.slnx
   global.json
   README.md
 ```
@@ -161,24 +161,24 @@ Only after the core is complete, consider one small automated regression test fo
 
 ## 6. Acceptance checklist
 
-- [ ] A valid POST returns `201`, a `Location` header, and the persisted customer with generated `Id` and UTC `CreatedAt`.
-- [ ] List returns `[]` initially and the expected customer after creation.
-- [ ] Fetch and update return `404` for an unknown customer.
-- [ ] Missing, null, empty, whitespace-only, overlong, and invalid-email inputs return `400` and do not write data.
-- [ ] Duplicate email on POST returns `409`, including case variants and surrounding whitespace after normalization.
-- [ ] Keeping the same email on PUT succeeds; using another customer's email returns `409`.
-- [ ] Two concurrent creates for the same email yield one saved customer, one `201`, and one `409`.
-- [ ] PUT updates all editable fields and preserves `Id` and `CreatedAt`.
-- [ ] Phone numbers retain their leading zero or `+` prefix.
-- [ ] A clean database is created from committed migrations, and applying migrations again is safe.
-- [ ] Compose builds and starts the API and SQL Server; customer data survives container recreation with the volume retained.
-- [ ] OpenAPI and the existing health endpoint work at the documented addresses.
-- [ ] Build and formatting checks pass; the README is sufficient for another developer to run the solution.
+- [x] A valid POST returns `201`, a `Location` header, and the persisted customer with generated `Id` and UTC `CreatedAt`.
+- [x] List returns `[]` initially and the expected customer after creation.
+- [x] Fetch and update return `404` for an unknown customer.
+- [x] Missing, null, empty, whitespace-only, overlong, and invalid-email inputs return `400` and do not write data.
+- [x] Duplicate email on POST returns `409`, including case variants and surrounding whitespace after normalization.
+- [x] Keeping the same email on PUT succeeds; using another customer's email returns `409`.
+- [x] Two concurrent creates for the same email yield one saved customer, one `201`, and one `409`.
+- [x] PUT updates all editable fields and preserves `Id` and `CreatedAt`.
+- [x] Phone numbers retain their leading zero or `+` prefix.
+- [x] A clean database is created from committed migrations, and applying migrations again is safe.
+- [x] Compose builds and starts the API and SQL Server; customer data survives container recreation with the volume retained.
+- [x] OpenAPI and the existing health endpoint work at the documented addresses.
+- [x] Build and formatting checks pass; the README is sufficient for another developer to run the solution.
 
-## 7. Review checkpoint
+## 7. Implementation outcome
 
-Recommended decisions to approve together: one API project, controllers with built-in validation, direct EF Core access, case-insensitive email uniqueness, SQL Server 2022, and two-container Compose with explicitly enabled startup migrations for the assessment.
+Implemented decisions: one API project, controllers with built-in validation, direct EF Core access, case-insensitive email uniqueness, SQL Server 2022, and two-container Compose with explicitly enabled startup migrations for the assessment.
 
-The main unresolved item is SQL Server compatibility on this ARM64 machine. The first implementation step resolves it. No additional architectural decisions are needed before starting.
+The API, migrations, and Docker workflow passed their functional checks. SQL Server nevertheless exited twice under ARM64 emulation after becoming healthy. The remaining infrastructure decision is an x64 host or supported SQL Server instance for reliable operation; see verification.md for the evidence and limits.
 
-Next action: review this plan, agree any changes, then authorize implementation.
+Next action: select a supported SQL Server environment if reliable long-running database operation is needed on this setup.

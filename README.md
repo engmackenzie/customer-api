@@ -1,106 +1,114 @@
-# Build With AI: Customer API
+# Customer Management API
 
-A .NET 10 Web API using EF Core migrations and SQL Server. One controller handles
-the four customer operations, with separate request/response DTOs and entities.
+A small .NET 10 API for creating, listing, reading, and updating customers. It stores them in SQL Server and applies EF Core migrations on startup when you run it with Docker.
 
-## Prerequisites
+The easiest way to try it is one command. Docker builds the API, starts SQL Server, waits until the database is ready, then starts the API.
 
-- .NET SDK 10.0.401 (or a newer 10.0.4xx patch) for local development.
-- Docker with Docker Compose.
-- Database image: `mcr.microsoft.com/mssql/server:2022-latest` (Developer edition).
+## What you need
+
+- Docker with Docker Compose
+- A `.env` file in the project root (see below)
+
+For running the API on your machine instead of in a container, you also need the .NET SDK 10.0.401 (or a newer 10.0.4xx patch). On this Mac it lives in `~/.dotnet`. New zsh terminals pick it up on their own. In an existing terminal:
 
 ```sh
 export DOTNET_ROOT="$HOME/.dotnet"
 export PATH="$DOTNET_ROOT:$PATH"
 ```
 
-## 1. Configure development
+## First-time setup
+
+From the project root, create `.env` if you do not already have one:
 
 ```sh
-cd /Users/mack/diskd/personal/build-with-ai
-cp .env.example .env
+cd /Users/mack/diskd/personal/customer-management
+test -f .env || cp .env.example .env
 ```
 
-Keep `.env` if it already exists. Set `MSSQL_SA_PASSWORD` to a strong development
-password with uppercase, lowercase, digits, and punctuation. Avoid `;` and `$`
-because it is interpolated into a connection string. `.env` is ignored by Git
-and excluded from Docker builds.
+Open `.env` and set `MSSQL_SA_PASSWORD` to a strong development password: 16 or more characters, with uppercase, lowercase, digits, and punctuation. Skip `;` and `$` — the password is placed into a connection string, and those characters get in the way. Git ignores `.env`, and Docker builds leave it out of the image.
 
-`API_PORT` defaults to `8080`. This Mac's prepared `.env` uses `5081` because
-another application occupies `8080`. SQL Server uses loopback port `14330`.
-Changing `.env` does not change the SQL password in an existing database volume;
-retain the original value.
+`API_PORT` is the port on your machine. The example file uses `8080`. This Mac's `.env` uses `5081` because something else is already on `8080`. SQL Server is published only on `127.0.0.1:14330`.
 
-## 2. Run with Docker
+## Run it with Docker
 
 ```sh
 docker compose up --build
 ```
 
-Compose waits for SQL Server to become healthy, then starts the API and applies
-committed migrations. `Database__ApplyMigrations=true` explicitly enables this
-single-instance assessment behavior; it is off by default outside Compose.
+That builds the API image, starts SQL Server, and starts the API once the database health check passes. The API applies the committed migrations and listens on port 8080 inside the container, mapped to `API_PORT` on your machine.
 
-Using the default port:
+Leave that terminal running. In another one, open:
 
-- Customers: `http://localhost:8080/api/customers`
-- OpenAPI JSON: `http://localhost:8080/openapi/v1.json`
-- Liveness: `http://localhost:8080/health`
+| What | Address |
+| --- | --- |
+| Customers | `http://localhost:5081/api/customers` |
+| OpenAPI JSON | `http://localhost:5081/openapi/v1.json` |
+| Liveness | `http://localhost:5081/health` |
 
-Use `5081` with this Mac's `.env`. Compose runs in Development, where OpenAPI is
-enabled. No Swagger UI dependency is needed. `/health` tests application liveness,
-not database readiness.
+If your `.env` still has `API_PORT=8080`, use `8080` in those URLs. Compose runs in Development, so OpenAPI is on. There is no Swagger UI. `/health` only checks that the process is up; it does not check the database.
 
-Stop the stack while retaining its database:
+A quick smoke test:
+
+```sh
+curl http://localhost:5081/api/customers
+```
+
+An empty database answers with `[]`.
+
+### Stop and start again
+
+Stop the containers and keep the data:
 
 ```sh
 docker compose down
 ```
 
-The named volume preserves data across container recreation. Adding `--volumes`
-deletes assessment data; use it only for an intentional reset.
+The next `docker compose up --build` brings the same database back. The SQL password is stored in that volume. If you change `MSSQL_SA_PASSWORD` later, the existing database still expects the old one. Keep the original password, or reset the volume on purpose:
 
-## 3. Run locally
+```sh
+docker compose down --volumes
+```
 
-From the project root, start SQL Server, load the local settings, restore tools
-and dependencies, and apply migrations:
+That deletes the customers stored for this assessment.
+
+## Run the API on your machine
+
+Use this when you want `dotnet watch` or a debugger. SQL Server still runs in Docker.
 
 ```sh
 docker compose up -d --wait sqlserver
 set -a
 source .env
 set +a
-export ConnectionStrings__Customers="Server=localhost,14330;Database=BuildWithAi;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
+export ConnectionStrings__Customers="Server=localhost,14330;Database=CustomerManagement;User Id=sa;Password=${MSSQL_SA_PASSWORD};Encrypt=True;TrustServerCertificate=True"
 dotnet restore
 dotnet tool restore
-dotnet ef database update --project src/BuildWithAi.Api
-dotnet run --project src/BuildWithAi.Api
+dotnet ef database update --project src/CustomerManagement.Api
+dotnet run --project src/CustomerManagement.Api
 ```
 
-The local API runs at `http://localhost:5080`. For hot reload, use
-`dotnet watch --project src/BuildWithAi.Api`. Local runs apply migrations explicitly.
-`TrustServerCertificate=True` is for the local SQL Server development certificate.
+The local API listens at `http://localhost:5080`. For hot reload, use `dotnet watch --project src/CustomerManagement.Api`. You apply migrations yourself with `dotnet ef database update`; the Docker path does that on startup.
 
-After a future model change:
+After you change the model:
 
 ```sh
-dotnet ef migrations add DescribeTheChange --project src/BuildWithAi.Api
-dotnet ef database update --project src/BuildWithAi.Api
+dotnet ef migrations add DescribeTheChange --project src/CustomerManagement.Api
+dotnet ef database update --project src/CustomerManagement.Api
 ```
 
-## 4. Use the API
+## Try the API
 
-Set the address for your run mode:
+Point `API_URL` at whichever process you started. Docker on this Mac is `5081`. A local `dotnet run` is `5080`.
 
 ```sh
-API_URL=http://localhost:5080
+API_URL=http://localhost:5081
 curl "$API_URL/api/customers"
 curl -i -X POST "$API_URL/api/customers" \
   -H 'Content-Type: application/json' \
   -d '{"firstName":"John","lastName":"Kamau","email":"john.kamau@example.com","phoneNumber":"0712345678"}'
 ```
 
-Use the returned customer ID in subsequent requests:
+Use the id from the response for the rest:
 
 ```sh
 CUSTOMER_ID=1
@@ -110,39 +118,31 @@ curl -i -X PUT "$API_URL/api/customers/$CUSTOMER_ID" \
   -d '{"firstName":"John","lastName":"Kamau","email":"john.kamau@example.com","phoneNumber":"+254722334455"}'
 ```
 
-- POST: `201 Created`, the customer, and a `Location` header.
-- List: `200 OK`, an array ordered by ID, or `[]`.
-- Get by ID: `200 OK`, or `404` when absent.
-- PUT: all four editable fields are required; returns `200 OK` or `404`. ID and creation time are preserved.
-- Invalid input: `400` with field-level errors.
-- Duplicate email: `409` with Problem Details, including concurrent writes.
-- Unexpected failures: `500` with generic Problem Details; diagnostics stay in server logs.
+- POST returns `201 Created`, the customer, and a `Location` header.
+- List returns `200` and an array ordered by id, or `[]`.
+- Get by id returns `200`, or `404` when that customer is missing.
+- PUT needs all four editable fields. It returns `200` or `404`. The id and creation time stay as they were.
+- Invalid input returns `400` with field errors.
+- A duplicate email returns `409`, including when two requests race.
+- Unexpected failures return `500` with a generic problem response. Details stay in the server logs.
 
-All input fields are required and trimmed. Names allow 100 characters, email 254,
-and phone 32. Email format is validated and uniqueness is case-insensitive,
-enforced by a SQL Server index. Phone strings preserve leading zeros and `+`.
-SQL Server generates creation times in UTC; responses include the UTC suffix.
+Every field is required and trimmed. Names can be 100 characters, email 254, phone 32. Email must look like an email, and uniqueness ignores case. Phone numbers keep a leading `0` or `+`. Creation times come from SQL Server in UTC and include the `Z` suffix in responses.
 
-`src/BuildWithAi.Api/BuildWithAi.Api.http` includes success and error examples.
-Set its `baseUrl` and `customerId` to match your environment.
+`src/CustomerManagement.Api/CustomerManagement.Api.http` has the same requests, including the error cases. Set `baseUrl` and `customerId` there to match your run.
 
-## 5. Verify changes
+## Check a build
 
 ```sh
 dotnet build --configuration Release
 dotnet format --verify-no-changes
 ```
 
-See `docs/implementation-plan.md` for scope and acceptance checks. Authentication,
-deletion, pagination, and search are intentionally outside this assessment.
+Scope and acceptance checks are in `docs/implementation-plan.md`. Authentication, deletion, pagination, and search are outside this assessment.
 
 ## Apple Silicon
 
-SQL Server uses `platform: linux/amd64`; the API uses the host's native architecture.
-Microsoft supports SQL Server containers on x86-64 Linux hosts and does not support
-emulation environments; see [Microsoft's guidance](https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment?view=sql-server-ver17).
-If emulation fails, use a supported x64 Docker host or connect the local API to
-a reachable SQL Server. The database provider remains SQL Server.
+The API image uses your machine's architecture. SQL Server is pinned to `linux/amd64`, so Docker emulates it on Apple Silicon. Microsoft supports SQL Server containers on x86-64 Linux and does not support emulation; see [their container guidance](https://learn.microsoft.com/en-us/sql/linux/sql-server-linux-docker-container-deployment?view=sql-server-ver17).
 
-Compose is for local assessment use. A deployed service should use appropriate
-credentials, trusted TLS, and a separate migration deployment step.
+On this Mac, SQL Server has exited with code 139 after becoming healthy. Starting it again was enough to finish the checks, and it is still the less stable option. An x64 Docker host is the reliable place to run the database. If emulation fails here, run the API locally and point it at a SQL Server you can reach. The provider stays SQL Server either way. Details are in `docs/verification.md`.
+
+This Compose file is for local assessment. A deployed service should use its own credentials, trusted TLS, and a separate step for migrations.

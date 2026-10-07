@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace BuildWithAi.Api.DTOs;
+namespace CustomerManagement.Api.DTOs;
 
 public sealed class CustomerRequest
 {

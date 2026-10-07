@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
-using BuildWithAi.Api.Entities;
+using CustomerManagement.Api.Entities;
 
-namespace BuildWithAi.Api.DTOs;
+namespace CustomerManagement.Api.DTOs;
 
 public sealed record CustomerResponse(
     int Id,

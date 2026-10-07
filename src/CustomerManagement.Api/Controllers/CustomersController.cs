@@ -1,11 +1,11 @@
-using BuildWithAi.Api.Data;
-using BuildWithAi.Api.DTOs;
-using BuildWithAi.Api.Entities;
+using CustomerManagement.Api.Data;
+using CustomerManagement.Api.DTOs;
+using CustomerManagement.Api.Entities;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 
-namespace BuildWithAi.Api.Controllers;
+namespace CustomerManagement.Api.Controllers;
 
 [ApiController]
 [Route("api/customers")]

@@ -1,4 +1,4 @@
-namespace BuildWithAi.Api.Entities;
+namespace CustomerManagement.Api.Entities;
 
 public sealed class Customer
 {

@@ -1,7 +1,7 @@
-using BuildWithAi.Api.Entities;
+using CustomerManagement.Api.Entities;
 using Microsoft.EntityFrameworkCore;
 
-namespace BuildWithAi.Api.Data;
+namespace CustomerManagement.Api.Data;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
